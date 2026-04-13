@@ -6,6 +6,24 @@
 - **Read `AGENTS.md`** for the n8nac workflow protocol (GitOps sync, research, validation, testing, error classification)
   - If `AGENTS.md` says "run n8nac init", do that first — it auto-generates the full protocol
 
+## n8n Connection (WSL)
+
+n8n runs on Windows, accessed from WSL via the vEthernet bridge — **not localhost**.
+
+```bash
+# Step 1: Init n8nac
+npx --yes n8nac init
+# Instance URL: http://172.31.224.1:5678
+# API key: grab from n8n UI → Settings → API → API Keys
+
+# Step 2: Verify
+npx --yes n8nac list
+```
+
+- n8n host from WSL: `172.31.224.1:5678` (vEthernet bridge)
+- API key stored in: `~/.config/n8nac-nodejs/Config/credentials.json` after init
+- `n8nac-config.json` is gitignored (instance-specific)
+
 ## Tech Stack
 
 - **n8n** — workflow automation (connect via `npx --yes n8nac init`)
