@@ -2,24 +2,24 @@ import { workflow, node, links } from '@n8n-as-code/transformer';
 
 // <workflow-map>
 // Workflow : Meeting Intelligence Pipeline
-// Nodes   : 14  |  Connections: 13
+// Nodes   : 14  |  Connections: 10
 //
 // NODE INDEX
 // ──────────────────────────────────────────────────────────────────
 // Property name                    Node type (short)         Flags
-// TextWebhook                        webhook                  [trigger]
-// AudioWebhook                       webhook                  [trigger]
+// TextWebhook                        webhook
+// AudioWebhook                       webhook
 // WhisperTranscription               httpRequest
-// AnalyzeMeeting                     agent                    [AI]
-// ClaudeModel                        lmChatOpenAi             [creds] [ai_languageModel]
-// MeetingSchema                      outputParserStructured   [AI] [ai_outputParser]
-// AutofixModel                       lmChatOpenAi             [creds] [ai_languageModel]
+// AnalyzeMeeting                     agent                      [AI]
+// ClaudeModel                        lmChatOpenAi               [creds] [ai_languageModel]
+// MeetingSchema                      outputParserStructured     [AI] [ai_outputParser]
+// AutofixModel                       lmChatOpenAi               [creds] [ai_languageModel]
 // PrepareCrmData                     code
 // MeasureProcessingTime              code
-// LogToGoogleSheets                  googleSheets             [creds]
-// SendProtocolEmail                  gmail                    [creds]
+// LogToGoogleSheets                  googleSheets               [creds]
+// SendProtocolEmail                  gmail                      [creds]
 // FormatSlackMessage                 code
-// PostSlackActions                   slack                    [creds]
+// PostSlackActions                   slack                      [creds]
 // WebhookResponse                    code
 //
 // ROUTING MAP
@@ -33,15 +33,18 @@ import { workflow, node, links } from '@n8n-as-code/transformer';
 //          → FormatSlackMessage
 //            → PostSlackActions
 //          → WebhookResponse
-//
 // AudioWebhook
 //    → WhisperTranscription
-//      → AnalyzeMeeting (merge point)
+//      → AnalyzeMeeting (↩ loop)
 //
 // AI CONNECTIONS
 // AnalyzeMeeting.uses({ ai_languageModel: ClaudeModel, ai_outputParser: MeetingSchema })
 // MeetingSchema.uses({ ai_languageModel: AutofixModel })
 // </workflow-map>
+
+// =====================================================================
+// METADATA DU WORKFLOW
+// =====================================================================
 
 @workflow({
     id: 'k2VzgzfxKOtosxzn',
@@ -49,8 +52,10 @@ import { workflow, node, links } from '@n8n-as-code/transformer';
     active: false,
     settings: { executionOrder: 'v1', callerPolicy: 'workflowsFromSameOwner', availableInMCP: false },
 })
-export class MeetingIntelligenceWorkflow {
-
+export class MeetingIntelligencePipelineWorkflow {
+    // =====================================================================
+    // CONFIGURATION DES NOEUDS
+    // =====================================================================
 
     @node({
         id: 'a1000001-0001-4000-8000-000000000001',
@@ -86,8 +91,6 @@ export class MeetingIntelligenceWorkflow {
         },
     };
 
-
-
     @node({
         id: 'a1000001-0001-4000-8000-000000000003',
         name: 'Whisper Transcription',
@@ -104,16 +107,30 @@ export class MeetingIntelligenceWorkflow {
         contentType: 'multipart-form-data',
         bodyParameters: {
             parameters: [
-                { parameterType: 'formBinaryData', name: 'file', inputDataFieldName: '={{ Object.keys($binary)[0] }}' },
-                { parameterType: 'formData', name: 'model', value: 'whisper-1' },
-                { parameterType: 'formData', name: 'language', value: 'de' },
-                { parameterType: 'formData', name: 'response_format', value: 'text' },
+                {
+                    parameterType: 'formBinaryData',
+                    name: 'file',
+                    inputDataFieldName: '={{ Object.keys($binary)[0] }}',
+                },
+                {
+                    parameterType: 'formData',
+                    name: 'model',
+                    value: 'whisper-1',
+                },
+                {
+                    parameterType: 'formData',
+                    name: 'language',
+                    value: 'de',
+                },
+                {
+                    parameterType: 'formData',
+                    name: 'response_format',
+                    value: 'text',
+                },
             ],
         },
         options: {},
     };
-
-
 
     @node({
         id: 'a1000001-0001-4000-8000-000000000004',
@@ -124,7 +141,7 @@ export class MeetingIntelligenceWorkflow {
     })
     AnalyzeMeeting = {
         promptType: 'define',
-        text: `={{ "TRANSKRIPT:\\n\\n" + ($('Text Webhook').isExecuted ? $('Text Webhook').item.json.body.transcript : $('Whisper Transcription').item.json.text) }}`,
+        text: "={{ \"TRANSKRIPT:\\n\\n\" + ($('Text Webhook').isExecuted ? $('Text Webhook').item.json.body.transcript : $('Whisper Transcription').item.json.text) }}",
         hasOutputParser: true,
         options: {
             systemMessage: `Du bist ein Meeting-Intelligence-Assistent. Analysiere das folgende Meeting-Transkript und extrahiere strukturierte Informationen.
@@ -185,7 +202,8 @@ REGELN:
     })
     MeetingSchema = {
         schemaType: 'manual',
-        inputSchema: '{"type":"object","properties":{"summary":{"type":"string","description":"3-5 Sätze Zusammenfassung des Meetings"},"decisions":{"type":"array","items":{"type":"object","properties":{"decision":{"type":"string","description":"Was wurde beschlossen"},"context":{"type":"string","description":"Warum/Kontext der Entscheidung"}},"required":["decision","context"]},"description":"Liste der getroffenen Entscheidungen"},"action_items":{"type":"array","items":{"type":"object","properties":{"owner":{"type":"string","description":"Verantwortliche Person"},"task":{"type":"string","description":"Aufgabe"},"deadline":{"type":["string","null"],"description":"Deadline wenn genannt, sonst null"},"priority":{"type":"string","enum":["high","medium","low"],"description":"Priorität"}},"required":["owner","task","deadline","priority"]},"description":"Action Items mit Owner, Task, Deadline, Priority"},"open_questions":{"type":"array","items":{"type":"string"},"description":"Offene Fragen aus dem Meeting"},"follow_ups":{"type":"array","items":{"type":"object","properties":{"topic":{"type":"string","description":"Follow-up Thema"},"when":{"type":"string","description":"Wann soll nachgefasst werden"},"participants":{"type":"array","items":{"type":"string"},"description":"Beteiligte Personen"}},"required":["topic","when","participants"]},"description":"Geplante Follow-ups"},"key_topics":{"type":"array","items":{"type":"string"},"description":"Hauptthemen des Meetings"},"sentiment":{"type":"string","enum":["positive","neutral","negative"],"description":"Gesamtstimmung des Meetings"},"duration_estimate_min":{"type":"integer","description":"Geschätzte Meeting-Dauer in Minuten"}},"required":["summary","decisions","action_items","open_questions","follow_ups","key_topics","sentiment","duration_estimate_min"]}',
+        inputSchema:
+            '{"type":"object","properties":{"summary":{"type":"string","description":"3-5 Sätze Zusammenfassung des Meetings"},"decisions":{"type":"array","items":{"type":"object","properties":{"decision":{"type":"string","description":"Was wurde beschlossen"},"context":{"type":"string","description":"Warum/Kontext der Entscheidung"}},"required":["decision","context"]},"description":"Liste der getroffenen Entscheidungen"},"action_items":{"type":"array","items":{"type":"object","properties":{"owner":{"type":"string","description":"Verantwortliche Person"},"task":{"type":"string","description":"Aufgabe"},"deadline":{"type":["string","null"],"description":"Deadline wenn genannt, sonst null"},"priority":{"type":"string","enum":["high","medium","low"],"description":"Priorität"}},"required":["owner","task","deadline","priority"]},"description":"Action Items mit Owner, Task, Deadline, Priority"},"open_questions":{"type":"array","items":{"type":"string"},"description":"Offene Fragen aus dem Meeting"},"follow_ups":{"type":"array","items":{"type":"object","properties":{"topic":{"type":"string","description":"Follow-up Thema"},"when":{"type":"string","description":"Wann soll nachgefasst werden"},"participants":{"type":"array","items":{"type":"string"},"description":"Beteiligte Personen"}},"required":["topic","when","participants"]},"description":"Geplante Follow-ups"},"key_topics":{"type":"array","items":{"type":"string"},"description":"Hauptthemen des Meetings"},"sentiment":{"type":"string","enum":["positive","neutral","negative"],"description":"Gesamtstimmung des Meetings"},"duration_estimate_min":{"type":"integer","description":"Geschätzte Meeting-Dauer in Minuten"}},"required":["summary","decisions","action_items","open_questions","follow_ups","key_topics","sentiment","duration_estimate_min"]}',
         autoFix: true,
     };
 
@@ -205,9 +223,6 @@ REGELN:
         },
         options: {},
     };
-
-    //DATA PREPARATION
-
 
     @node({
         id: 'a1000001-0001-4000-8000-000000000008',
@@ -287,9 +302,6 @@ data.Processing_Time_Sec = Math.round((Date.now() - data._startTime) / 1000);
 return { json: data };`,
     };
 
-    //OUTPUT NODES
-
-
     @node({
         id: 'a1000001-0001-4000-8000-000000000010',
         name: 'Log to Google Sheets',
@@ -315,18 +327,54 @@ return { json: data };`,
         columns: {
             mappingMode: 'defineBelow',
             value: [
-                { column: 'Timestamp', fieldValue: '={{ $json.Timestamp }}' },
-                { column: 'Meeting_Title', fieldValue: '={{ $json.Meeting_Title }}' },
-                { column: 'Date', fieldValue: '={{ $json.Date }}' },
-                { column: 'Participants', fieldValue: '={{ $json.Participants }}' },
-                { column: 'Summary', fieldValue: '={{ $json.Summary }}' },
-                { column: 'Decisions', fieldValue: '={{ $json.Decisions }}' },
-                { column: 'Action_Items', fieldValue: '={{ $json.Action_Items }}' },
-                { column: 'Open_Questions', fieldValue: '={{ $json.Open_Questions }}' },
-                { column: 'Follow_Ups', fieldValue: '={{ $json.Follow_Ups }}' },
-                { column: 'Sentiment', fieldValue: '={{ $json.Sentiment }}' },
-                { column: 'Transcript_Length', fieldValue: '={{ $json.Transcript_Length }}' },
-                { column: 'Processing_Time_Sec', fieldValue: '={{ $json.Processing_Time_Sec }}' },
+                {
+                    column: 'Timestamp',
+                    fieldValue: '={{ $json.Timestamp }}',
+                },
+                {
+                    column: 'Meeting_Title',
+                    fieldValue: '={{ $json.Meeting_Title }}',
+                },
+                {
+                    column: 'Date',
+                    fieldValue: '={{ $json.Date }}',
+                },
+                {
+                    column: 'Participants',
+                    fieldValue: '={{ $json.Participants }}',
+                },
+                {
+                    column: 'Summary',
+                    fieldValue: '={{ $json.Summary }}',
+                },
+                {
+                    column: 'Decisions',
+                    fieldValue: '={{ $json.Decisions }}',
+                },
+                {
+                    column: 'Action_Items',
+                    fieldValue: '={{ $json.Action_Items }}',
+                },
+                {
+                    column: 'Open_Questions',
+                    fieldValue: '={{ $json.Open_Questions }}',
+                },
+                {
+                    column: 'Follow_Ups',
+                    fieldValue: '={{ $json.Follow_Ups }}',
+                },
+                {
+                    column: 'Sentiment',
+                    fieldValue: '={{ $json.Sentiment }}',
+                },
+                {
+                    column: 'Transcript_Length',
+                    fieldValue: '={{ $json.Transcript_Length }}',
+                },
+                {
+                    column: 'Processing_Time_Sec',
+                    fieldValue: '={{ $json.Processing_Time_Sec }}',
+                },
             ],
         },
         options: {},
@@ -463,32 +511,23 @@ return {
 };`,
     };
 
-    //ROUTING AND CONNECTIONS
-
+    // =====================================================================
+    // ROUTAGE ET CONNEXIONS
+    // =====================================================================
 
     @links()
     defineRouting() {
-        // Text path: TextWebhook → AnalyzeMeeting
         this.TextWebhook.out(0).to(this.AnalyzeMeeting.in(0));
-
-        // Audio path: AudioWebhook → WhisperTranscription → AnalyzeMeeting
         this.AudioWebhook.out(0).to(this.WhisperTranscription.in(0));
         this.WhisperTranscription.out(0).to(this.AnalyzeMeeting.in(0));
-
-        // Analysis → Data Prep → Processing Time
         this.AnalyzeMeeting.out(0).to(this.PrepareCrmData.in(0));
         this.PrepareCrmData.out(0).to(this.MeasureProcessingTime.in(0));
-
-        // Fan-out to all outputs
         this.MeasureProcessingTime.out(0).to(this.LogToGoogleSheets.in(0));
         this.MeasureProcessingTime.out(0).to(this.SendProtocolEmail.in(0));
         this.MeasureProcessingTime.out(0).to(this.FormatSlackMessage.in(0));
         this.MeasureProcessingTime.out(0).to(this.WebhookResponse.in(0));
-
-        // Slack formatting → Slack post
         this.FormatSlackMessage.out(0).to(this.PostSlackActions.in(0));
 
-        // AI connections
         this.AnalyzeMeeting.uses({
             ai_languageModel: this.ClaudeModel.output,
             ai_outputParser: this.MeetingSchema.output,
