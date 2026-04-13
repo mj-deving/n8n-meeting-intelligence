@@ -1,9 +1,14 @@
 {
   "workflows": {
     "k2VzgzfxKOtosxzn": {
-      "lastSyncedHash": "c4246cf1ff140d3de15d24f8fdd5915727b1825c574c2e80fd0e84fe0815b17c",
-      "lastSyncedAt": "2026-04-13T15:45:06.449Z",
+      "lastSyncedHash": "1f44226eb9b423d1cfcfd2132c1cc17047a5615d389ae5860860ccccaa8af535",
+      "lastSyncedAt": "2026-04-13T16:26:04.279Z",
       "filename": "meeting-intelligence.workflow.ts"
+    },
+    "Cctig8XetXsoKeou": {
+      "lastSyncedHash": "dd3819a436811c6d4d1b49c4bcf2999837ad99ebf1f580a250d3eb873690ea62",
+      "lastSyncedAt": "2026-04-13T16:20:09.945Z",
+      "filename": "setup-meeting-sheet.workflow.ts"
     }
   }
 }

@@ -124,14 +124,14 @@ export class MeetingIntelligenceWorkflow {
     })
     AnalyzeMeeting = {
         promptType: 'define',
-        text: `={{ "TRANSKRIPT:\\n\\n" + ($('Text Webhook').isExecuted ? $('Text Webhook').item.json.body.transcript : $('Whisper Transcription').item.json.text) }}`,
+        text: `={{ "TRANSKRIPT:\\n\\n" + $json.body.transcript }}`,
         hasOutputParser: true,
         options: {
             systemMessage: `Du bist ein Meeting-Intelligence-Assistent. Analysiere das folgende Meeting-Transkript und extrahiere strukturierte Informationen.
 
-TEILNEHMER: {{ $('Text Webhook').isExecuted ? $('Text Webhook').item.json.body.participants : ($('Audio Webhook').item.json.body.participants || 'Nicht angegeben') }}
-DATUM: {{ $('Text Webhook').isExecuted ? $('Text Webhook').item.json.body.date : ($('Audio Webhook').item.json.body.date || new Date().toISOString().split('T')[0]) }}
-TITEL: {{ $('Text Webhook').isExecuted ? $('Text Webhook').item.json.body.title : ($('Audio Webhook').item.json.body.title || 'Meeting') }}
+TEILNEHMER: {{ $json.body.participants }}
+DATUM: {{ $json.body.date }}
+TITEL: {{ $json.body.title }}
 
 Analysiere und antworte als JSON:
 {
@@ -171,7 +171,7 @@ REGELN:
         model: {
             __rl: true,
             mode: 'list',
-            value: 'anthropic/claude-sonnet-4-20250514',
+            value: 'anthropic/claude-sonnet-4',
         },
         options: {},
     };
@@ -219,15 +219,15 @@ REGELN:
     PrepareCrmData = {
         mode: 'runOnceForEachItem',
         language: 'javaScript',
-        jsCode: `const isTextInput = $('Text Webhook').isExecuted;
-const meta = isTextInput
-  ? $('Text Webhook').item.json.body
-  : $('Audio Webhook').item.json.body;
-const ai = $input.item.json.output;
-const transcript = isTextInput
-  ? meta.transcript
-  : $('Whisper Transcription').item.json.text;
+        jsCode: `// Determine which webhook triggered — use try/catch since non-executed nodes throw
+let meta = {};
+let transcript = '';
+try { meta = $('Text Webhook').item.json.body; transcript = meta.transcript || ''; } catch(e) {}
+if (!transcript) {
+  try { meta = $('Audio Webhook').item.json.body || {}; transcript = $('Whisper Transcription').item.json.text || ''; } catch(e) {}
+}
 
+const ai = $input.item.json.output;
 const wordCount = (transcript || '').split(/\\s+/).filter(w => w.length > 0).length;
 
 const decisionsText = (ai.decisions || [])
@@ -246,10 +246,6 @@ const followUpsText = (ai.follow_ups || [])
   .map(f => \`• \${f.topic} — \${f.when} (\${f.participants.join(', ')})\`)
   .join('\\n');
 
-// Capture webhook arrival time for processing duration measurement
-const webhookNode = isTextInput ? $('Text Webhook') : $('Audio Webhook');
-const startTime = new Date(webhookNode.item.json.headers['date'] || Date.now()).getTime();
-
 return {
   json: {
     Timestamp: new Date().toISOString(),
@@ -264,10 +260,9 @@ return {
     Sentiment: ai.sentiment,
     Transcript_Length: wordCount,
     Processing_Time_Sec: 0,
-    // _-prefixed fields excluded from Sheets by column filter below
     _ai: ai,
     _meta: meta,
-    _startTime: startTime,
+    _startTime: Date.now(),
   }
 };`,
     };
@@ -304,7 +299,7 @@ return { json: data };`,
         documentId: {
             __rl: true,
             mode: 'url',
-            value: '',
+            value: 'https://docs.google.com/spreadsheets/d/1lxBwaXfdLP7Zxxj5SpNMSfVKsa5tloyf069x5bwHwqw/edit',
         },
         sheetName: {
             __rl: true,
