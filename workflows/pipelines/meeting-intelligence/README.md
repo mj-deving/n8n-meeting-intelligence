@@ -147,10 +147,10 @@ docker run -d -p 9000:9000 \
 ## Setup
 
 1. `npx --yes n8nac init` — n8n Instance verbinden
-2. Google Sheet erstellen mit Header-Zeile (siehe Schema oben)
-3. Sheet-URL in `workflow.ts` → `LogToGoogleSheets.documentId.value` eintragen
+2. Sheet erstellen: `npx --yes n8nac push setup-meeting-sheet.workflow.ts` → aktivieren → `GET /webhook/setup-meeting-sheet` triggern
+3. Sheet-URL aus der Response in `workflow.ts` → `LogToGoogleSheets.documentId.value` eintragen
 4. `npx --yes n8nac push meeting-intelligence.workflow.ts`
-5. Workflow in n8n aktivieren
+5. `npx --yes n8nac workflow activate <id>`
 6. Testen mit `curl` (siehe Test-Abschnitt)
 
 ## Install
@@ -162,10 +162,35 @@ npx --yes n8nac push meeting-intelligence.workflow.ts
 # Settings → Import from file → workflow/workflow.json
 ```
 
+## Beispiel-Output (Sprint Planning Q2)
+
+**Slack-Nachricht:**
+```
+@channel *📋 Meeting-Protokoll: Sprint Planning Q2*
+_2026-04-14 | Teilnehmer: Marius, Lisa, Thomas_
+
+*Zusammenfassung:* Sprint Planning für Q2 mit Fokus auf Meeting-Intelligence-Pipeline
+für Konferenz-Demo am 28. April. Entscheidung für Claude Sonnet über OpenRouter.
+
+*Action Items:*
+  🔴 *Thomas*: API-Dokumentation fertigstellen (bis Diese Woche)
+  🔴 *Marius*: OpenRouter-Credentials an Thomas teilen (bis Heute)
+  🔴 *Thomas*: Whisper-Integration übernehmen (bis Freitag)
+  🔴 *Lisa*: Google Sheets Template vorbereiten (bis Mittwoch)
+  🟡 *Marius*: Slack-Integration implementieren (bis Donnerstag)
+  ⚪ *Thomas*: Lokale Whisper-Option dokumentieren
+
+*Entscheidungen:*
+  ✅ Meeting-Intelligence-Pipeline als Sprint-Ziel Nummer eins
+  ✅ Claude Sonnet über OpenRouter statt GPT-4
+```
+
+**Verarbeitungszeit:** 19.4 Sekunden (292 Wörter Transkript)
+
 ## Status
 
 - [x] Workflow built (14 nodes)
 - [x] Test payloads (3 scenarios)
-- [ ] Pushed to n8n
-- [ ] End-to-end tested
-- [ ] Google Sheet connected
+- [x] Pushed to n8n (ID: k2VzgzfxKOtosxzn)
+- [x] End-to-end tested (Execution #158, 19.4s)
+- [x] Google Sheet connected (Meeting Intelligence CRM)
