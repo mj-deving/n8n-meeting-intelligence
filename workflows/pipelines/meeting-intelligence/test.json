@@ -1,0 +1,44 @@
+[
+  {
+    "description": "Sprint Planning Q2 — positive, 3+ action items, 2+ decisions",
+    "input": {
+      "title": "Sprint Planning Q2",
+      "participants": "Marius, Lisa, Thomas",
+      "date": "2026-04-14",
+      "transcript": "Marius: Okay, willkommen zum Sprint Planning für Q2. Wir haben einiges vor uns. Lisa, kannst du kurz den Status vom letzten Sprint zusammenfassen?\n\nLisa: Klar. Wir haben 18 von 22 Story Points geschafft. Die Migration der Datenbank ist abgeschlossen, das neue Dashboard ist live. Offen geblieben sind die API-Dokumentation und der Performance-Test für den Report-Generator.\n\nThomas: Die API-Docs kann ich diese Woche noch fertig machen. Brauche maximal zwei Tage.\n\nMarius: Super. Dann nehmen wir das mit in den neuen Sprint. Was sind die Prioritäten für Q2?\n\nLisa: Ich schlage vor, wir fokussieren uns auf drei Bereiche: Erstens, die Meeting-Intelligence-Pipeline fertigstellen — das ist unser Demo-Projekt für die Konferenz am 28. April. Zweitens, das Onboarding-Portal für neue Kunden. Drittens, die Performance-Optimierung vom Analytics-Dashboard.\n\nThomas: Einverstanden. Für die Meeting-Pipeline brauche ich Zugang zum OpenRouter-Account. Marius, kannst du mir die Credentials teilen?\n\nMarius: Mache ich heute noch. Entscheidung: Wir priorisieren die Meeting-Pipeline als Sprint-Ziel Nummer eins, weil die Konferenz-Demo nicht verschiebbar ist.\n\nLisa: Zweite Entscheidung: Wir nutzen Claude Sonnet über OpenRouter statt GPT-4, weil die Kosten deutlich niedriger sind und die Qualität für unseren Use Case ausreicht.\n\nThomas: Ich übernehme die Whisper-Integration bis Freitag. Lisa, kannst du das Google Sheets Template vorbereiten?\n\nLisa: Ja, mache ich bis Mittwoch.\n\nMarius: Gut. Offene Frage: Brauchen wir für die DSGVO-Compliance einen lokalen Whisper-Server oder reicht die OpenAI API für die Demo?\n\nThomas: Für die Demo reicht die API. Aber wir sollten die lokale Option dokumentieren.\n\nMarius: Einverstanden. Follow-up: Wir treffen uns am Freitag um 10 Uhr für einen kurzen Demo-Check. Lisa und Thomas, bitte beide dabei sein.\n\nLisa: Steht. Noch eine Frage: Wer kümmert sich um die Slack-Integration?\n\nMarius: Das übernehme ich selbst. Bis Donnerstag ist das fertig.\n\nThomas: Perfekt. Dann haben wir einen klaren Plan. Gutes Meeting!"
+    },
+    "expected": {
+      "action_items_min": 3,
+      "decisions_min": 2,
+      "sentiment": "positive"
+    }
+  },
+  {
+    "description": "Kundengespräch Autohaus Müller — positive, 2+ action items, 1+ follow-up",
+    "input": {
+      "title": "Kundengespräch Autohaus Müller",
+      "participants": "Marius, Thomas Müller",
+      "date": "2026-04-14",
+      "transcript": "Marius: Herr Müller, schön dass wir uns heute zusammensetzen konnten. Wie ich verstanden habe, suchen Sie nach einer Lösung für Ihre Terminverwaltung?\n\nThomas Müller: Genau. Wir haben drei Standorte und aktuell läuft alles über Excel und Telefon. Das ist nicht mehr tragbar. Wir verlieren Kunden, weil Termine doppelt vergeben werden oder Rückrufe vergessen werden.\n\nMarius: Das kenne ich. Wie viele Mitarbeiter arbeiten bei Ihnen mit der Terminplanung?\n\nThomas Müller: Insgesamt 12 Leute an den drei Standorten. Plus 4 Servicetechniker, die draußen unterwegs sind.\n\nMarius: Verstehe. Wir könnten Ihnen eine KI-gestützte Lösung bauen, die eingehende Anrufe automatisch kategorisiert, Termine vorschlägt und in Ihr bestehendes System einpflegt. Das Ganze läuft über n8n als Automatisierungsplattform.\n\nThomas Müller: Klingt interessant. Was würde das kosten?\n\nMarius: Für die initiale Einrichtung rechne ich mit etwa 5.000 Euro. Danach fallen monatlich circa 200 Euro für die API-Kosten an. Der ROI liegt erfahrungsgemäß bei 3-6 Monaten.\n\nThomas Müller: Das klingt machbar. Unser Budget liegt bei 8.000 Euro für dieses Quartal. Können wir einen Prototypen in zwei Wochen sehen?\n\nMarius: Ja, das ist realistisch. Ich schicke Ihnen bis Montag ein detailliertes Angebot mit Zeitplan. Dann bräuchte ich von Ihnen Zugang zu Ihrem aktuellen Kalendersystem und eine Liste der häufigsten Terminarten.\n\nThomas Müller: Das kann ich Ihnen diese Woche noch zuschicken.\n\nMarius: Perfekt. Dann schlage ich vor, wir treffen uns in zwei Wochen wieder und ich zeige Ihnen den Prototypen. Passt der 28. April?\n\nThomas Müller: Der 28. passt. Vormittags wäre mir lieber.\n\nMarius: Gut, dann sagen wir 10 Uhr. Ich freue mich auf die Zusammenarbeit!\n\nThomas Müller: Ich mich auch. Vielen Dank für Ihre Zeit."
+    },
+    "expected": {
+      "action_items_min": 2,
+      "follow_ups_min": 1,
+      "sentiment": "positive"
+    }
+  },
+  {
+    "description": "Incident Review: API-Ausfall — negative, 4+ action items, 1+ decision",
+    "input": {
+      "title": "Incident Review: API-Ausfall",
+      "participants": "Marius, DevOps-Team",
+      "date": "2026-04-14",
+      "transcript": "Marius: Okay Team, wir müssen den API-Ausfall von gestern Abend aufarbeiten. Die Downtime war von 21:15 bis 23:45 Uhr. Lisa, kannst du die Timeline durchgehen?\n\nLisa: Um 21:15 hat unser Monitoring den ersten Alert ausgelöst. Die API hat 503er zurückgegeben. Ursache war ein Memory Leak im Worker-Service, der durch das neue Caching-Feature ausgelöst wurde. Das Feature war am Nachmittag deployed worden.\n\nThomas: Ich habe das Deployment gemacht. Das Problem ist, dass wir keinen Load-Test mit dem neuen Caching durchgeführt haben. Unter Last hat der Cache exponentiell Speicher verbraucht.\n\nMarius: Wie haben wir das behoben?\n\nLisa: Thomas hat um 22:30 das Caching-Feature per Feature-Flag deaktiviert. Danach brauchten die Worker noch 45 Minuten zum Neustart, weil die Health-Checks zu konservativ eingestellt waren.\n\nMarius: Das sind zweieinhalb Stunden Downtime. Was war der Impact?\n\nThomas: 342 fehlgeschlagene API-Calls von 28 verschiedenen Kunden. Wir haben 3 Support-Tickets bekommen.\n\nMarius: Entscheidung: Ab sofort gilt eine Pflicht für Load-Tests vor jedem Feature-Deployment. Keine Ausnahmen.\n\nLisa: Ich erstelle bis Freitag eine Load-Test-Pipeline in unserer CI/CD.\n\nThomas: Ich überarbeite die Health-Check-Konfiguration bis Mittwoch. Die Restart-Zeit muss unter 5 Minuten liegen.\n\nMarius: Gut. Außerdem brauchen wir besseres Alerting. Wer kümmert sich darum?\n\nLisa: Ich baue einen PagerDuty-Integration, sodass wir innerhalb von 2 Minuten nach dem ersten Alert eine Benachrichtigung bekommen. Bis nächste Woche Montag.\n\nMarius: Thomas, bitte schreib einen Post-Mortem-Bericht und schick ihn an alle Kunden, die betroffen waren. Bis morgen Abend.\n\nThomas: Mache ich.\n\nMarius: Offene Frage: Sollen wir das Caching-Feature komplett entfernen oder fixen?\n\nLisa: Ich würde es fixen. Die Performance-Verbesserung war signifikant. Aber mit Memory-Limits und Circuit-Breaker.\n\nThomas: Einverstanden. Aber erst nach dem Load-Test-Setup.\n\nMarius: Gut. Nächstes Follow-up: Review des fixes am Montag um 9 Uhr. Alle dabei."
+    },
+    "expected": {
+      "action_items_min": 4,
+      "decisions_min": 1,
+      "sentiment": "negative"
+    }
+  }
+]
