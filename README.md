@@ -1,158 +1,111 @@
-# My n8n Project
+# Meeting Intelligence Pipeline
 
 ![n8n](https://img.shields.io/badge/n8n-2.x-orange.svg)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![Code-First](https://img.shields.io/badge/code--first-n8nac-blue.svg)
 
-**Code-first n8n workflows with [n8nac](https://github.com/mj-deving/n8n-autopilot) and [code-mode](https://github.com/universal-tool-calling-protocol/code-mode).**
+**Audio-Aufnahme oder Text-Transkript eines Meetings → KI-Analyse → strukturiertes Protokoll mit Action Items, Entscheidungen und Follow-ups.**
+
+## Architektur
+
+```mermaid
+graph LR
+    A["POST /webhook/meeting-text<br/>JSON: title, participants,<br/>date, transcript"] --> D
+    B["POST /webhook/meeting<br/>Audio Upload"] --> C["Whisper API<br/>OpenAI whisper-1"]
+    C --> D["Analyze Meeting<br/>Claude Sonnet"]
+    D --> E["Prepare CRM Data"]
+    E --> F["Measure Time"]
+    F --> G["📊 Google Sheets"]
+    F --> H["📧 Gmail Protocol"]
+    F --> I["💬 Slack Actions"]
+    F --> J["↩️ Webhook Response"]
+```
+
+## Was es macht
+
+1. **Transkript empfangen** — Text-Webhook (JSON) oder Audio-Webhook (multipart → Whisper)
+2. **KI-Analyse** — Claude Sonnet extrahiert: Summary, Entscheidungen, Action Items, Offene Fragen, Follow-ups, Sentiment
+3. **Google Sheets** — Protokoll als CRM-Zeile mit 12 Spalten
+4. **Gmail** — HTML-formatiertes Protokoll an Teilnehmer
+5. **Slack** — Action Items mit @channel bei urgent Priorities
 
 ## Quick Start
 
 ```bash
-# 1. Clone this template
-git clone https://github.com/YOUR-USER/YOUR-PROJECT.git
-cd YOUR-PROJECT
-
-# 2. Install dependencies
+# 1. Abhängigkeiten
 npm install
 
-# 3. Connect to your n8n instance
+# 2. n8n Instance verbinden
 npx --yes n8nac init
+# URL: http://172.31.224.1:5678
 
-# 4. Enable pre-commit secret detection
-git config core.hooksPath .githooks
+# 3. Google Sheet erstellen
+npx --yes n8nac push "workflows/172_31_224_1:5678_marius _j/personal/setup-meeting-sheet.workflow.ts"
+npx --yes n8nac workflow activate <sheet-workflow-id>
+curl http://172.31.224.1:5678/webhook/setup-meeting-sheet
 
-# 5. Scaffold your first workflow
-npm run new-workflow -- agents/01-my-agent "My First Agent"
+# 4. Hauptworkflow deployen
+npx --yes n8nac push "workflows/172_31_224_1:5678_marius _j/personal/meeting-intelligence.workflow.ts"
+npx --yes n8nac workflow activate <workflow-id>
 
-# 6. Build, push, test
-npx --yes n8nac push my-first-agent.workflow.ts
+# 5. Testen
+curl -X POST http://172.31.224.1:5678/webhook/meeting-text \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test Meeting","participants":"Alice, Bob","date":"2026-04-14","transcript":"Alice: Wir brauchen einen Plan..."}'
 ```
 
-## What's Included
+## Beispiel-Output
 
-| Directory | Purpose |
+**Slack-Nachricht (Sprint Planning Q2):**
+```
+@channel *📋 Meeting-Protokoll: Sprint Planning Q2*
+_2026-04-14 | Teilnehmer: Marius, Lisa, Thomas_
+
+*Action Items:*
+  🔴 *Thomas*: API-Dokumentation fertigstellen (bis Diese Woche)
+  🔴 *Lisa*: Google Sheets Template vorbereiten (bis Mittwoch)
+  🟡 *Marius*: Slack-Integration implementieren (bis Donnerstag)
+
+*Entscheidungen:*
+  ✅ Meeting-Intelligence-Pipeline als Sprint-Ziel Nummer eins
+  ✅ Claude Sonnet über OpenRouter statt GPT-4
+```
+
+**Verarbeitungszeit:** 19.4 Sekunden (292 Wörter Transkript)
+
+## Projekt-Struktur
+
+| Verzeichnis | Inhalt |
 |---|---|
-| `workflows/` | Your workflow directories (scaffolded by `new-workflow.sh`) |
-| `workflow/` | Root-level workflow export for standalone distribution |
-| `template/` | Scaffold source files for new workflows |
-| `scripts/` | `new-workflow.sh` (scaffold) + `check-secrets.sh` (pre-commit) |
-| `assets/` | Screenshots, diagrams, and visual assets |
-| `docs/` | GitHub Pages site + Architecture Decision Records |
-| `.beads/` | [Beads](https://github.com/steveyegge/beads) AI-native issue tracker |
-| `.githooks/` | Pre-commit secret detection |
-| `.github/` | Issue templates, funding config, Pages CI |
+| `workflows/pipelines/meeting-intelligence/` | Workflow-Source, README, Test-Payloads |
+| `workflows/172_31_224_1:5678_marius _j/personal/` | n8nac Sync-Kopien (gepusht zu n8n) |
+| `scripts/` | Scaffold + Secret-Detection |
+| `docs/` | GitHub Pages + ADRs |
 
-## Workflow Lifecycle
+## Credentials
 
-```mermaid
-graph LR
-    A["Scaffold"] --> B["Develop"]
-    B --> C["Push"]
-    C --> D["Test"]
-    D --> E["Document"]
-```
+| Credential | Type | Zweck |
+|---|---|---|
+| OpenRouter | openAiApi | Claude Sonnet + Gemini Flash |
+| Google Sheets | googleSheetsOAuth2Api | Meeting-Protokoll CRM |
+| Gmail | gmailOAuth2 | Protokoll-Versand |
+| Slack Bot | slackApi | Action Items Channel |
 
-1. **Scaffold** a new workflow directory with `npm run new-workflow`
-2. **Develop** in n8n UI or write `.workflow.ts` directly
-3. **Push** to n8n with `npx --yes n8nac push <filename>.workflow.ts`
-4. **Test** with `npx --yes n8nac test <id> --prod`
-5. **Document** the README, benchmarks, and test payloads
+## Whisper-Optionen
 
-## Commands
+| Option | Für | Details |
+|---|---|---|
+| **OpenAI API** (Standard) | Demo/schnell | `whisper-1`, Daten gehen an OpenAI |
+| **Lokaler Server** (DSGVO) | Produktion | `docker run -d -p 9000:9000 onerahmet/openai-whisper-asr-webservice` |
 
-```bash
-# Scaffold a new workflow
-npm run new-workflow -- agents/01-my-agent "My Agent Name"
+Siehe [Workflow-README](workflows/pipelines/meeting-intelligence/README.md) für vollständige Dokumentation.
 
-# Check for accidentally committed secrets
-npm run check-secrets
+## Workflows
 
-# Validate root workflow JSON
-npm run validate
-
-# n8nac workflow operations
-npx --yes n8nac list                    # List all workflows
-npx --yes n8nac pull <id>              # Pull from n8n
-npx --yes n8nac push <file>.workflow.ts # Push to n8n
-npx --yes n8nac verify <id>            # Validate live workflow
-npx --yes n8nac test <id> --prod       # Test webhook workflows
-
-# Beads issue tracking
-bd ready              # Find available work
-bd create "Title"     # Create an issue
-bd close <id>         # Complete work
-bd sync               # Sync with git
-```
-
-## Workflow Structure
-
-Each scaffolded workflow gets:
-
-```
-workflows/<category>/<slug>/
-├── README.md           # Overview, flow diagram, test instructions
-├── workflow/
-│   ├── workflow.ts     # n8nac TypeScript source
-│   └── workflow.json   # n8n JSON export (for UI import)
-├── test.json           # Test payloads
-└── benchmark.md        # Performance data (if applicable)
-```
-
-For standalone distribution, the root `workflow/workflow.json` contains a single exportable workflow.
-
-## Categories
-
-| Category | What Goes Here |
-|---|---|
-| `agents` | AI agent workflows (LLM-driven, tool-calling) |
-| `pipelines` | Data processing pipelines (ETL, enrichment) |
-| `triggers` | Event-driven automations (webhook, schedule, RSS) |
-| `utilities` | Helper workflows (health checks, monitoring) |
-
-## Setup
-
-### Pre-commit Hook
-
-Enable the secrets check hook:
-
-```bash
-git config core.hooksPath .githooks
-```
-
-### GitHub Pages
-
-The `docs/` directory is auto-deployed to GitHub Pages on push. Enable Pages in your repo settings:
-
-```bash
-# Via GitHub CLI
-gh api repos/{owner}/{repo}/pages -X POST -f build_type=workflow
-```
-
-Then edit `docs/index.html` with your project details.
-
-### AI Agent Support
-
-All three agent instruction files are committed and work natively — no manual setup needed:
-
-- **`CLAUDE.md`** — Auto-read by Claude Code at startup. References both files below.
-- **`@AGENTS.md`** — Auto-read by Codex. Beads workflow, session protocol, "Landing the Plane".
-- **`AGENTS.md`** — Stub until you run `npx --yes n8nac init`, which generates the full n8nac protocol.
-
-### Beads Issue Tracking
-
-This template includes [Beads](https://github.com/steveyegge/beads) (`bd`) for AI-native issue tracking:
-
-```bash
-bd onboard    # Get started
-bd ready      # Find available work
-bd sync       # Sync issues with git
-```
-
-## Documentation
-
-- [GitHub Pages Site](https://YOUR-USER.github.io/YOUR-PROJECT/) — project overview with Mermaid diagrams
-- [Architecture Decision Records](docs/decisions/) — documented design choices
+| Workflow | ID | Status |
+|---|---|---|
+| Meeting Intelligence Pipeline | `k2VzgzfxKOtosxzn` | Active |
+| Setup Meeting Intelligence Sheet | `Cctig8XetXsoKeou` | Active |
 
 ## License
 

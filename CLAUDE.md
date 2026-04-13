@@ -47,9 +47,18 @@ bd ready              # Start session — find available work
 bd sync               # End session — persist state for next agent
 ```
 
+## Workflows
+
+| Workflow | n8n ID | File |
+|---|---|---|
+| Meeting Intelligence Pipeline | `k2VzgzfxKOtosxzn` | `meeting-intelligence.workflow.ts` |
+| Setup Meeting Sheet | `Cctig8XetXsoKeou` | `setup-meeting-sheet.workflow.ts` |
+
 ## Critical Rules
 
-- **Push filename only**: `npx --yes n8nac push workflow.ts` — no paths
+- **Push with full path**: `npx --yes n8nac push "workflows/172_31_224_1:5678_marius _j/personal/meeting-intelligence.workflow.ts"`
 - **Init required**: Must run `npx --yes n8nac init` before pull/push
+- **Activate after push**: `npx --yes n8nac workflow activate <id>` — push deactivates
+- **Model ID**: Use `anthropic/claude-sonnet-4` on OpenRouter (no date suffix)
 - **Session end**: Always run `bd sync` then `git push` — Landing the Plane protocol
 - **Never leave unpushed work** — work isn't done until `git push` succeeds
