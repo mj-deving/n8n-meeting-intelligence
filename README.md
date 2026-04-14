@@ -25,25 +25,16 @@
 ## Architecture
 
 ```mermaid
-flowchart LR
-    A["POST /webhook/meeting-text\nJSON Body"] --> D
-    B["POST /webhook/meeting\nAudio Upload"] --> C["Whisper API\nOpenAI whisper-1"]
-    C --> D["Analyze Meeting\nClaude Sonnet"]
-    D --> E["Prepare CRM Data\n12 Columns"]
+graph LR
+    A["POST /webhook/meeting-text<br/>JSON: title, participants,<br/>date, transcript"] --> D
+    B["POST /webhook/meeting<br/>Audio Upload"] --> C["Whisper API<br/>OpenAI whisper-1"]
+    C --> D["Analyze Meeting<br/>Claude Sonnet"]
+    D --> E["Prepare CRM Data"]
     E --> F["Measure Time"]
-    F --> G["Google Sheets\nMeeting CRM"]
-    F --> H["Gmail\nHTML Protocol"]
-    F --> I["Slack\nAction Items"]
-    F --> J["Webhook\nJSON Response"]
-
-    style A fill:#6c8cff,color:#0f1117,stroke:none
-    style B fill:#6c8cff,color:#0f1117,stroke:none
-    style C fill:#a78bfa,color:#0f1117,stroke:none
-    style D fill:#fbbf24,color:#0f1117,stroke:none
-    style G fill:#4ade80,color:#0f1117,stroke:none
-    style H fill:#4ade80,color:#0f1117,stroke:none
-    style I fill:#4ade80,color:#0f1117,stroke:none
-    style J fill:#4ade80,color:#0f1117,stroke:none
+    F --> G["Google Sheets"]
+    F --> H["Gmail Protocol"]
+    F --> I["Slack Actions"]
+    F --> J["Webhook Response"]
 ```
 
 | Node | Type | Purpose |
