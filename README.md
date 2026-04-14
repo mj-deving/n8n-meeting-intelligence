@@ -25,16 +25,31 @@
 ## Architecture
 
 ```mermaid
-graph LR
-    A["POST /webhook/meeting-text<br/>JSON: title, participants,<br/>date, transcript"] --> D
-    B["POST /webhook/meeting<br/>Audio Upload"] --> C["Whisper API<br/>OpenAI whisper-1"]
-    C --> D["Analyze Meeting<br/>Claude Sonnet"]
-    D --> E["Prepare CRM Data"]
-    E --> F["Measure Time"]
-    F --> G["Google Sheets"]
-    F --> H["Gmail Protocol"]
-    F --> I["Slack Actions"]
-    F --> J["Webhook Response"]
+flowchart LR
+    TextWH["Text Webhook\nPOST /webhook/meeting-text"] --> Analyze
+    AudioWH["Audio Webhook\nPOST /webhook/meeting"] --> Whisper["Whisper API\nOpenAI whisper-1"]
+    Whisper --> Analyze
+    Analyze["Analyze Meeting\n(Claude Sonnet via OpenRouter)"] --> Prepare
+    Analyze -.->|AI| Model["Claude Model\nanthropic/claude-sonnet-4"]
+    Analyze -.->|Parser| Schema["Meeting Schema\nStructured Output + AutoFix"]
+    Prepare["Prepare CRM Data\n(Code Node)"] --> Time["Measure Time"]
+    Time --> Sheets["Log to Google Sheets\n(Meeting Intelligence CRM)"]
+    Time --> Email["Gmail Send\n(HTML Protocol)"]
+    Time --> Slack["Format + Post Slack\n(Action Items)"]
+    Time --> Response["Webhook Response\n(JSON Summary)"]
+
+    style TextWH fill:#e1f5fe,color:#0f1117,stroke:none
+    style AudioWH fill:#e8f5e9,color:#0f1117,stroke:none
+    style Whisper fill:#e8f5e9,color:#0f1117,stroke:none
+    style Analyze fill:#fff3e0,color:#0f1117,stroke:none
+    style Model fill:#fff3e0,color:#0f1117,stroke:none
+    style Schema fill:#fff3e0,color:#0f1117,stroke:none
+    style Prepare fill:#f5f5f5,color:#0f1117,stroke:none
+    style Time fill:#f5f5f5,color:#0f1117,stroke:none
+    style Sheets fill:#e8eaf6,color:#0f1117,stroke:none
+    style Email fill:#c8e6c9,color:#0f1117,stroke:none
+    style Slack fill:#ffcdd2,color:#0f1117,stroke:none
+    style Response fill:#e8eaf6,color:#0f1117,stroke:none
 ```
 
 | Node | Type | Purpose |
