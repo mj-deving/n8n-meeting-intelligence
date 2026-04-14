@@ -2,37 +2,37 @@
 
 [![n8n](https://img.shields.io/badge/n8n-2.x-orange.svg)](https://n8n.io)
 [![Status](https://img.shields.io/badge/status-live-brightgreen.svg)](#verified-test-results)
-[![Nodes](https://img.shields.io/badge/nodes-14-blue.svg)](#architektur)
+[![Nodes](https://img.shields.io/badge/nodes-14-blue.svg)](#architecture)
 [![Code-First](https://img.shields.io/badge/code--first-n8nac-blue.svg)](https://github.com/mj-deving/n8n-autopilot)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**Audio-Aufnahme oder Text-Transkript eines Meetings → KI-Analyse → strukturiertes Protokoll mit Action Items, Entscheidungen und Follow-ups.** 14-Node n8n Workflow mit Claude Sonnet via OpenRouter. Verarbeitung in ~19 Sekunden, outputs an Google Sheets, Gmail und Slack.
+**Meeting audio or text transcript → AI analysis → structured protocol with action items, decisions, and follow-ups.** 14-node n8n workflow powered by Claude Sonnet via OpenRouter. Processing in ~19 seconds, outputs to Google Sheets, Gmail, and Slack.
 
 ## Table of Contents
 
-- [Architektur](#architektur) — 14-Node Workflow mit 2 Trigger-Varianten
-- [Was es macht](#was-es-macht) — Pipeline-Schritte im Detail
-- [Quick Start](#quick-start) — Setup in 5 Schritten
-- [Beispiel-Output](#beispiel-output) — echte Slack-Nachricht aus Test
-- [Test-Szenarien](#test-szenarien) — 3 verifizierte Szenarien
-- [LLM Output Schema](#llm-output-schema) — 8 extrahierte Felder
-- [Google Sheets Schema](#google-sheets-schema) — 12 CRM-Spalten
-- [Tech Stack](#tech-stack) — Versionen und Abhängigkeiten
-- [Credentials](#credentials) — benötigte n8n Credentials
-- [Whisper-Optionen](#whisper-optionen) — API vs. lokal (DSGVO)
-- [Projekt-Struktur](#projekt-struktur)
+- [Architecture](#architecture) — 14-node workflow with 2 trigger variants
+- [How It Works](#how-it-works) — pipeline steps in detail
+- [Quick Start](#quick-start) — setup in 5 steps
+- [Example Output](#example-output) — real Slack message from test run
+- [Test Scenarios](#test-scenarios) — 3 verified scenarios
+- [LLM Output Schema](#llm-output-schema) — 8 extracted fields
+- [Google Sheets Schema](#google-sheets-schema) — 12 CRM columns
+- [Tech Stack](#tech-stack) — versions and dependencies
+- [Credentials](#credentials) — required n8n credentials
+- [Whisper Options](#whisper-options) — API vs. local (GDPR)
+- [Project Structure](#project-structure)
 
-## Architektur
+## Architecture
 
 ```mermaid
 flowchart LR
     A["POST /webhook/meeting-text\nJSON Body"] --> D
     B["POST /webhook/meeting\nAudio Upload"] --> C["Whisper API\nOpenAI whisper-1"]
     C --> D["Analyze Meeting\nClaude Sonnet"]
-    D --> E["Prepare CRM Data\n12 Spalten"]
+    D --> E["Prepare CRM Data\n12 Columns"]
     E --> F["Measure Time"]
     F --> G["Google Sheets\nMeeting CRM"]
-    F --> H["Gmail\nHTML Protokoll"]
+    F --> H["Gmail\nHTML Protocol"]
     F --> I["Slack\nAction Items"]
     F --> J["Webhook\nJSON Response"]
 
@@ -46,107 +46,107 @@ flowchart LR
     style J fill:#4ade80,color:#0f1117,stroke:none
 ```
 
-| Node | Type | Funktion |
-|------|------|----------|
-| Text Webhook | webhook | JSON-Input: title, participants, date, transcript |
-| Audio Webhook | webhook | Multipart Audio-Upload |
+| Node | Type | Purpose |
+|------|------|---------|
+| Text Webhook | webhook | JSON input: title, participants, date, transcript |
+| Audio Webhook | webhook | Multipart audio upload |
 | Whisper Transcription | httpRequest | OpenAI Whisper API (model: whisper-1, language: de) |
-| Analyze Meeting | agent (LangChain) | Claude Sonnet analysiert Transkript |
+| Analyze Meeting | agent (LangChain) | Claude Sonnet analyzes transcript |
 | Claude Model | lmChatOpenAi | OpenRouter → anthropic/claude-sonnet-4 |
-| Meeting Schema | outputParserStructured | JSON Schema mit 8 Pflichtfeldern |
-| AutoFix Model | lmChatOpenAi | Gemini Flash für Schema-Autofix |
-| Prepare CRM Data | code | Formatiert 12 Spalten für Google Sheets |
-| Measure Processing Time | code | Verarbeitungsdauer berechnen |
-| Log to Google Sheets | googleSheets | Append-Row mit explizitem Column-Mapping |
-| Send Protocol Email | gmail | HTML-Protokoll an Teilnehmer |
-| Format Slack Message | code | Slack-Markdown mit Priority-Icons |
-| Post Slack Actions | slack | Team-Channel, @channel bei urgent |
-| Webhook Response | code | JSON-Zusammenfassung als Response |
+| Meeting Schema | outputParserStructured | JSON schema with 8 required fields |
+| AutoFix Model | lmChatOpenAi | Gemini Flash for schema auto-fix |
+| Prepare CRM Data | code | Formats 12 columns for Google Sheets |
+| Measure Processing Time | code | Calculates processing duration |
+| Log to Google Sheets | googleSheets | Append row with explicit column mapping |
+| Send Protocol Email | gmail | HTML protocol to participants |
+| Format Slack Message | code | Slack markdown with priority icons |
+| Post Slack Actions | slack | Team channel, @channel on urgent |
+| Webhook Response | code | JSON summary as response |
 
-## Was es macht
+## How It Works
 
-1. **Transkript empfangen** — Text-Webhook (JSON) oder Audio-Webhook (multipart → Whisper)
-2. **KI-Analyse** — Claude Sonnet extrahiert: Summary, Entscheidungen, Action Items, Offene Fragen, Follow-ups, Key Topics, Sentiment
-3. **Google Sheets** — Protokoll als CRM-Zeile mit 12 Spalten
-4. **Gmail** — HTML-formatiertes Protokoll an Teilnehmer (Summary, Entscheidungen als Bullets, Action Items als Tabelle)
-5. **Slack** — Action Items mit @channel bei high-priority Items
+1. **Receive transcript** — Text webhook (JSON) or audio webhook (multipart → Whisper)
+2. **AI analysis** — Claude Sonnet extracts: summary, decisions, action items, open questions, follow-ups, key topics, sentiment
+3. **Google Sheets** — Protocol as CRM row with 12 columns
+4. **Gmail** — HTML-formatted protocol to participants (summary, decisions as bullets, action items as table)
+5. **Slack** — Action items with @channel on high-priority items
 
 ## Quick Start
 
 ```bash
-# 1. Abhängigkeiten
+# 1. Install dependencies
 npm install
 
-# 2. n8n Instance verbinden
+# 2. Connect n8n instance
 npx --yes n8nac init
 # URL: http://172.31.224.1:5678
 
-# 3. Google Sheet erstellen
+# 3. Create Google Sheet
 npx --yes n8nac push "workflows/172_31_224_1:5678_marius _j/personal/setup-meeting-sheet.workflow.ts"
 npx --yes n8nac workflow activate Cctig8XetXsoKeou
 curl http://172.31.224.1:5678/webhook/setup-meeting-sheet
 
-# 4. Hauptworkflow deployen
+# 4. Deploy main workflow
 npx --yes n8nac push "workflows/172_31_224_1:5678_marius _j/personal/meeting-intelligence.workflow.ts"
 npx --yes n8nac workflow activate k2VzgzfxKOtosxzn
 
-# 5. Testen
+# 5. Test
 curl -X POST http://172.31.224.1:5678/webhook/meeting-text \
   -H "Content-Type: application/json" \
   -d @workflows/pipelines/meeting-intelligence/test.json
 ```
 
-## Beispiel-Output
+## Example Output
 
-**Slack-Nachricht (Sprint Planning Q2):**
+**Slack message (Sprint Planning Q2):**
 ```
-@channel *📋 Meeting-Protokoll: Sprint Planning Q2*
-_2026-04-14 | Teilnehmer: Marius, Lisa, Thomas_
+@channel *📋 Meeting Protocol: Sprint Planning Q2*
+_2026-04-14 | Participants: Marius, Lisa, Thomas_
 
-*Zusammenfassung:* Sprint Planning für Q2 mit Fokus auf Meeting-Intelligence-Pipeline
-für Konferenz-Demo am 28. April. Entscheidung für Claude Sonnet über OpenRouter.
+*Summary:* Sprint planning for Q2 focused on the Meeting Intelligence Pipeline
+for the conference demo on April 28. Decision to use Claude Sonnet via OpenRouter.
 
 *Action Items:*
-  🔴 *Thomas*: API-Dokumentation fertigstellen (bis Diese Woche)
-  🔴 *Marius*: OpenRouter-Credentials an Thomas teilen (bis Heute)
-  🔴 *Thomas*: Whisper-Integration übernehmen (bis Freitag)
-  🔴 *Lisa*: Google Sheets Template vorbereiten (bis Mittwoch)
-  🟡 *Marius*: Slack-Integration implementieren (bis Donnerstag)
-  ⚪ *Thomas*: Lokale Whisper-Option dokumentieren
+  🔴 *Thomas*: Complete API documentation (by this week)
+  🔴 *Marius*: Share OpenRouter credentials with Thomas (by today)
+  🔴 *Thomas*: Take over Whisper integration (by Friday)
+  🔴 *Lisa*: Prepare Google Sheets template (by Wednesday)
+  🟡 *Marius*: Implement Slack integration (by Thursday)
+  ⚪ *Thomas*: Document local Whisper option
 
-*Entscheidungen:*
-  ✅ Meeting-Intelligence-Pipeline als Sprint-Ziel Nummer eins
-  ✅ Claude Sonnet über OpenRouter statt GPT-4
+*Decisions:*
+  ✅ Prioritize Meeting Intelligence Pipeline as sprint goal #1
+  ✅ Use Claude Sonnet via OpenRouter instead of GPT-4
 ```
 
 ## Verified Test Results
 
-| Metrik | Wert |
-|--------|------|
-| Verarbeitungszeit | 19.4 Sekunden |
-| Transkript-Länge | 292 Wörter |
-| Action Items extrahiert | 6 |
-| Entscheidungen erkannt | 2 |
+| Metric | Value |
+|--------|-------|
+| Processing time | 19.4 seconds |
+| Transcript length | 292 words |
+| Action items extracted | 6 |
+| Decisions detected | 2 |
 | Sentiment | positive |
-| Alle 12 Nodes | OK |
+| All 12 nodes | OK |
 | Execution ID | #158 |
-| Datum | 2026-04-13 |
+| Date | 2026-04-13 |
 
-## Test-Szenarien
+## Test Scenarios
 
-3 Test-Payloads in `workflows/pipelines/meeting-intelligence/test.json`:
+3 test payloads in `workflows/pipelines/meeting-intelligence/test.json`:
 
-| # | Szenario | Teilnehmer | Transkript | Erwartung |
-|---|----------|------------|------------|-----------|
-| 1 | Sprint Planning Q2 | Marius, Lisa, Thomas | 292 Wörter | 3+ Action Items, 2+ Entscheidungen, positive |
-| 2 | Kundengespräch Autohaus Müller | Marius, Thomas Müller | 266 Wörter | 2+ Action Items, 1+ Follow-up, positive |
-| 3 | Incident Review: API-Ausfall | Marius, DevOps-Team | 281 Wörter | 4+ Action Items, 1+ Entscheidung, negative |
+| # | Scenario | Participants | Transcript | Expected |
+|---|----------|-------------|------------|----------|
+| 1 | Sprint Planning Q2 | Marius, Lisa, Thomas | 292 words | 3+ action items, 2+ decisions, positive |
+| 2 | Customer Call (Autohaus Muller) | Marius, Thomas Muller | 266 words | 2+ action items, 1+ follow-up, positive |
+| 3 | Incident Review: API Outage | Marius, DevOps Team | 281 words | 4+ action items, 1+ decision, negative |
 
 ## LLM Output Schema
 
 ```json
 {
-  "summary": "3-5 Sätze Zusammenfassung",
+  "summary": "3-5 sentence summary",
   "decisions": [{"decision": "...", "context": "..."}],
   "action_items": [{"owner": "...", "task": "...", "deadline": "...|null", "priority": "high|medium|low"}],
   "open_questions": ["..."],
@@ -159,60 +159,60 @@ für Konferenz-Demo am 28. April. Entscheidung für Claude Sonnet über OpenRout
 
 ## Google Sheets Schema
 
-| Spalte | Typ | Beschreibung |
-|--------|-----|-------------|
-| Timestamp | DateTime | Zeitpunkt der Verarbeitung |
-| Meeting_Title | Text | Titel des Meetings |
-| Date | Date | Meeting-Datum |
-| Participants | Text | Teilnehmer (kommagetrennt) |
-| Summary | Text | KI-generierte Zusammenfassung |
-| Decisions | Text | Entscheidungen (nummeriert) |
-| Action_Items | Text | Action Items mit Owner + Deadline |
-| Open_Questions | Text | Offene Fragen (nummeriert) |
-| Follow_Ups | Text | Geplante Follow-ups |
+| Column | Type | Description |
+|--------|------|-------------|
+| Timestamp | DateTime | Processing timestamp |
+| Meeting_Title | Text | Meeting title |
+| Date | Date | Meeting date |
+| Participants | Text | Participants (comma-separated) |
+| Summary | Text | AI-generated summary |
+| Decisions | Text | Decisions (numbered) |
+| Action_Items | Text | Action items with owner + deadline |
+| Open_Questions | Text | Open questions (numbered) |
+| Follow_Ups | Text | Planned follow-ups |
 | Sentiment | Text | positive / neutral / negative |
-| Transcript_Length | Number | Wörter im Transkript |
-| Processing_Time_Sec | Number | Verarbeitungsdauer in Sekunden |
+| Transcript_Length | Number | Words in transcript |
+| Processing_Time_Sec | Number | Processing duration in seconds |
 
 ## Tech Stack
 
-| Komponente | Version / Detail |
-|------------|-----------------|
-| n8n | 2.x (Windows, WSL-Zugriff via vEthernet Bridge) |
+| Component | Version / Detail |
+|-----------|-----------------|
+| n8n | 2.x (Windows, WSL access via vEthernet bridge) |
 | n8nac | 1.5.0 (code-first workflow development) |
-| LLM (Analyse) | anthropic/claude-sonnet-4 via OpenRouter |
+| LLM (Analysis) | anthropic/claude-sonnet-4 via OpenRouter |
 | LLM (AutoFix) | google/gemini-2.0-flash-001 via OpenRouter |
-| Transkription | OpenAI Whisper API (whisper-1, language: de) |
-| Output | Google Sheets + Gmail + Slack |
-| Sprache | TypeScript (n8nac .workflow.ts) |
+| Transcription | OpenAI Whisper API (whisper-1, language: de) |
+| Outputs | Google Sheets + Gmail + Slack |
+| Language | TypeScript (n8nac .workflow.ts) |
 
 ## Credentials
 
-| Credential | Type | Zweck |
+| Credential | Type | Purpose |
 |---|---|---|
 | OpenRouter | openAiApi | Claude Sonnet + Gemini Flash |
-| Google Sheets | googleSheetsOAuth2Api | Meeting-Protokoll CRM |
-| Gmail | gmailOAuth2 | Protokoll-Versand |
-| Slack Bot | slackApi | Action Items Channel |
-| OpenAI (optional) | httpHeaderAuth | Whisper API (nur Audio-Path) |
+| Google Sheets | googleSheetsOAuth2Api | Meeting protocol CRM |
+| Gmail | gmailOAuth2 | Protocol delivery |
+| Slack Bot | slackApi | Action items channel |
+| OpenAI (optional) | httpHeaderAuth | Whisper API (audio path only) |
 
-## Whisper-Optionen
+## Whisper Options
 
-| Option | Einsatz | Details |
-|--------|---------|---------|
-| **OpenAI API** (Standard) | Demo / schnell | `POST api.openai.com/v1/audio/transcriptions`, model: whisper-1 |
-| **Lokaler Server** (DSGVO) | Produktion | `docker run -d -p 9000:9000 onerahmet/openai-whisper-asr-webservice` |
+| Option | Use Case | Details |
+|--------|----------|---------|
+| **OpenAI API** (default) | Demo / fast | `POST api.openai.com/v1/audio/transcriptions`, model: whisper-1 |
+| **Local Server** (GDPR) | Production | `docker run -d -p 9000:9000 onerahmet/openai-whisper-asr-webservice` |
 
 <details>
-<summary><strong>Lokaler Whisper-Server Setup</strong></summary>
+<summary><strong>Local Whisper Server Setup</strong></summary>
 
 ```bash
-# faster-whisper als Docker-Service
+# faster-whisper as Docker service
 docker run -d -p 9000:9000 \
   onerahmet/openai-whisper-asr-webservice:latest
 
-# Im Workflow anpassen:
-# Whisper Transcription Node → URL ändern auf:
+# Adjust in workflow:
+# Whisper Transcription Node → change URL to:
 # http://localhost:9000/asr?language=de&output=json
 ```
 
@@ -225,26 +225,26 @@ docker run -d -p 9000:9000 \
 | Meeting Intelligence Pipeline | `k2VzgzfxKOtosxzn` | Active | 14 |
 | Setup Meeting Intelligence Sheet | `Cctig8XetXsoKeou` | Active | 2 |
 
-## Projekt-Struktur
+## Project Structure
 
 ```
 n8n-meeting-intelligence/
 ├── workflows/
 │   ├── pipelines/meeting-intelligence/
-│   │   ├── README.md              # Detaillierte Workflow-Dokumentation
+│   │   ├── README.md              # Detailed workflow documentation
 │   │   ├── workflow/
-│   │   │   ├── workflow.ts        # n8nac TypeScript Source (14 Nodes)
-│   │   │   └── workflow.json      # n8n JSON Export
-│   │   └── test.json              # 3 Test-Szenarien
+│   │   │   ├── workflow.ts        # n8nac TypeScript source (14 nodes)
+│   │   │   └── workflow.json      # n8n JSON export
+│   │   └── test.json              # 3 test scenarios
 │   └── 172_31_224_1.../personal/
-│       ├── meeting-intelligence.workflow.ts  # n8nac Sync-Kopie
-│       └── setup-meeting-sheet.workflow.ts   # Sheet-Setup Helper
+│       ├── meeting-intelligence.workflow.ts  # n8nac sync copy
+│       └── setup-meeting-sheet.workflow.ts   # Sheet setup helper
 ├── scripts/
-│   ├── new-workflow.sh            # Scaffold neuer Workflows
-│   └── check-secrets.sh           # Pre-commit Secret Detection
+│   ├── new-workflow.sh            # Scaffold new workflows
+│   └── check-secrets.sh           # Pre-commit secret detection
 ├── docs/                          # GitHub Pages + ADRs
-├── CLAUDE.md                      # AI Agent Instructions
-├── AGENTS.md                      # n8nac Protocol
+├── CLAUDE.md                      # AI agent instructions
+├── AGENTS.md                      # n8nac protocol
 └── README.md
 ```
 
