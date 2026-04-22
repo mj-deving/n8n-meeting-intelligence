@@ -30,6 +30,16 @@ npx --yes n8nac list
 - **n8nac** — code-first workflow development (`.workflow.ts` format)
 - **Beads** (`bd`) — AI-native issue tracker and agent memory
 
+## Beads Conventions
+
+- Beads is the task authority for this repo.
+- Start with `bd dolt pull || true` and `bd ready --json`.
+- Create self-contained beads at creation time with `bd create --description "what and why" --context "files, commands, current state" --notes "SOURCES: <url or internal source>. kn entry: <filename or none>"`.
+- For investigations or regressions, make beads evidence-first: repro, observed evidence, likely fix surface when justified, and acceptance that can falsify the current theory.
+- Decompose obvious epics into child beads immediately and wire order with `bd dep`.
+- Close beads with explicit reasons such as `completed`, `superseded`, `already implemented`, or `invalidated by better evidence`.
+- End sessions with `bd dolt push`, not the older `bd sync` flow.
+
 ## Key Commands
 
 ```bash
@@ -43,8 +53,9 @@ npx --yes n8nac test <id> --prod       # Test webhook workflows
 npm run new-workflow -- <category>/<slug> "Display Name"
 
 # Beads
-bd ready              # Start session — find available work
-bd sync               # End session — persist state for next agent
+bd dolt pull || true  # Refresh shared Beads state
+bd ready --json       # Start session — find available work
+bd dolt push          # End session — persist state for next agent
 ```
 
 ## Workflows
@@ -56,9 +67,10 @@ bd sync               # End session — persist state for next agent
 
 ## Critical Rules
 
+- Read `AGENTS.md` after this file for the repo workflow contract.
 - **Push with full path**: `npx --yes n8nac push "workflows/172_31_224_1:5678_marius _j/personal/meeting-intelligence.workflow.ts"`
 - **Init required**: Must run `npx --yes n8nac init` before pull/push
 - **Activate after push**: `npx --yes n8nac workflow activate <id>` — push deactivates
 - **Model ID**: Use `anthropic/claude-sonnet-4` on OpenRouter (no date suffix)
-- **Session end**: Always run `bd sync` then `git push` — Landing the Plane protocol
+- **Session end**: Always run `bd dolt push` then `git push` — Landing the Plane protocol
 - **Never leave unpushed work** — work isn't done until `git push` succeeds
