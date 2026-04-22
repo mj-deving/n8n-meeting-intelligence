@@ -1,10 +1,6 @@
 # Meeting Intelligence Pipeline
 
-[![n8n](https://img.shields.io/badge/n8n-2.x-orange.svg)](https://n8n.io)
-[![Status](https://img.shields.io/badge/status-live-brightgreen.svg)](#verified-test-results)
-[![Nodes](https://img.shields.io/badge/nodes-14-blue.svg)](#architecture)
-[![Code-First](https://img.shields.io/badge/code--first-n8nac-blue.svg)](https://github.com/mj-deving/n8n-autopilot)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![n8n](https://img.shields.io/badge/-n8n-EA4B71?style=flat-square) ![TypeScript](https://img.shields.io/badge/-TypeScript-3178C6?style=flat-square) ![Whisper](https://img.shields.io/badge/-Whisper-74AA9C?style=flat-square) ![Claude](https://img.shields.io/badge/-Claude-D4A574?style=flat-square)
 
 **Meeting audio or text transcript → AI analysis → structured protocol with action items, decisions, and follow-ups.** 14-node n8n workflow powered by Claude Sonnet via OpenRouter. Processing in ~19 seconds, outputs to Google Sheets, Gmail, and Slack.
 
