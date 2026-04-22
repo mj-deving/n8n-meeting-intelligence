@@ -1,1 +1,7 @@
-{"database":"beads.db","jsonl_export":"issues.jsonl"}
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "n8n_meeting_intelligence",
+  "project_id": "aa874d29-1e21-4f47-8117-280391c5342a"
+}
